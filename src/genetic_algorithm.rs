@@ -18,16 +18,28 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
     let mut nodes: Vec<i32> = (0..number_of_cities).collect();
     // Populacja jest dwuwymiarową tablicą permutacji
     // Populacja startowa jest generowana losowo
-    let mut population: Vec<Vec<i32>> = create_starting_population(&number_of_cities, &population_size, &nodes);
+    let mut population: Vec<Vec<i32>> = create_starting_population(&number_of_cities,
+                                                                   &population_size,
+                                                                   &nodes);
     // Podbnie zbiór rodziców jest tablicą dwuwymiarową osobników wybranych z populacji
-    let mut parents: Vec<Vec<i32>> = Vec::new();
+    // Zakłądamy, że jest on połową całej populacji
+    let mut parents_population_size: i32 = population_size / 2;
+    let mut parents_population: Vec<Vec<i32>> = find_parents_in_population(&population,
+                                                                           &population_size,
+                                                                           &parents_population_size,
+                                                                           &matrix);
+
+    for i in 0..parents_population_size {
+        println!("{:?}", parents_population[i as usize]);
+    }
+
 
 }
 
 fn create_starting_population(number_of_cities: &i32,
                               population_size: &i32,
                               nodes: &Vec<i32>) -> Vec<Vec<i32>> {
-    println!("Generowanie populacji początkowej, rozmiar: {}", &number_of_cities);
+    println!("Generowanie populacji początkowej, rozmiar: {}", &population_size);
 
     // Tablica dwuwymiarowa przechowująca gotową populację
     let mut population: Vec<Vec<i32>> = Vec::new();
@@ -36,7 +48,7 @@ fn create_starting_population(number_of_cities: &i32,
 
     // Wygenerowanie losowej populacji
     // Ogólnie, powinno tutaj być sprawdzenie czy dany element nie istnieje już w populacji
-    // Ale mam to w dupie, bo sam ma siostry bliźniaczki
+    // Ale mam to w dupie, bo sam mam siostry bliźniaczki
     // Więc mój algorytm dopuszcza opcję dwóch takich samych elementów w populacji
     for i in 0..(population_size.clone()) {
         single_population_element = nodes.clone();
@@ -48,15 +60,60 @@ fn create_starting_population(number_of_cities: &i32,
     return population;
 }
 
-fn find_parents_in_population() {
-
-    // Suma całkowita wszystkich wartości permutacji
+fn find_parents_in_population(population: &Vec<Vec<i32>>,
+                              population_size: &i32,
+                              parents_population_size: &i32,
+                              matrix: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    println!("Wyszukiwanie rodziców w populacji o rozmiarze {}", &population_size);
+    // Populacja która będzie przechowywać wybranych rodziców
+    let mut selected_parents: Vec<Vec<i32>> = Vec::new();
+    // Suma całkowita wszystkich wartości funkcji przystosowania populacji
     // Uwaga, spora liczba może tu wyjść
-    let mut permutations_sum: i64;
-    // Tablica przechowująca wartości wszystkich permutacji
-    let mut permutation_values: Vec<i32> = Vec::new();
+    let mut permutations_evaluation_sum: i64 = 0;
+    // Tablica przechowująca wartości funkcji przystosowania wszystkich permutacji
+    let mut permutation_evaluation_values: Vec<i32> = Vec::new();
+    // Wyliczenie wartości funkcji przystosowania dla wszystkich osobników populacji
+    // Zwiększenie sumy całkowitej funkcji przystosowania
+    for i in 0..population_size.clone() {
+        permutation_evaluation_values.push(permutation_evaluation_value(&matrix, &population[i as usize]));
+        permutations_evaluation_sum = permutations_evaluation_sum + permutation_evaluation_values[i as usize] as i64;
+    }
+    // Zmienna przechowująca losowy współczynnik określający funkcję celu
+    let mut random_target_value: i64;
 
-    //TODO: Dokończyć
+    // Iteracja wybierająca elementy do populacji rodziców
+    for i in 0..parents_population_size.clone() {
+        // Określenie losowe funkcji celu dla wygenerowanych wartości
+        random_target_value = generate_randomized_target_value(&permutations_evaluation_sum);
+        // Zmienne przechowujące aktualną i poprzednią wartość
+        // Wykorzystywaną przez pętlę sprawdzającą populację początkową
+        let mut current_value: i64 = 0;
+        let mut previous_value: i64 = 0;
+        // Pętla sprawdzająca wszystkie osobniki populacji
+        // Wybiera te, które spełniają funkcję celu i umieszcza jes w tablicy rodziców
+        for i in 0..population_size.clone() {
+            // Zwiększenie aktualnej wartośći o wartość funkcji przystosowania dla aktualnie sprawdzanego osobnika
+            current_value = current_value + permutation_evaluation_values[i as usize] as i64;
+
+            // Jeżeli poprzednia i aktualna wartość jest mniejsza od wartości funkcji celu
+            // Aktualnie sprawdzany element populacji nadaje się na rodzica
+            // W przeciwnym wypadku należy zwiększyć wartość ostatniej funkcji
+            // O wartość funkcji ewaluacji ostatniego osobnika
+            if (previous_value <= random_target_value) && (current_value <= random_target_value) {
+                let permutation_to_add_as_parent: Vec<i32> = population[i as usize].clone();
+                selected_parents.push(permutation_to_add_as_parent);
+                break;
+            } else {
+                previous_value = previous_value + permutation_evaluation_values[i as usize] as i64;
+            }
+        }
+    }
+
+    println!("Wybranych rodziców: {}", &selected_parents.len());
+
+    // Zwracana wartość jest tablicą zawierającą osobniki spełniające
+    // Kryteria do bycia rodzicem
+    return selected_parents;
 }
 
 // Funkcja obliczająca koszt ścieżki
@@ -111,4 +168,16 @@ fn swap_elements_in_permutation(permutation: Vec<i32>,
     new_population[second_element_index] = saved_element;
     // Populacja po zamianie zwracana jako wynik
     return new_population;
+}
+
+fn generate_randomized_target_value(permutation_evaluation_sum: &i64) -> i64 {
+
+    // Losowy float w zakresie 0..1
+    let random_float: f64 = rand::thread_rng().next_f64();
+    // Obliczenie kryterium celu jako float
+    let target_as_float: f64 = random_float * (permutation_evaluation_sum.clone() as f64);
+    // Konwersja kryterium celu na i64
+    let target: i64 = target_as_float as i64;
+    // Zwrot wyliczonego kryterium celu
+    return target;
 }
