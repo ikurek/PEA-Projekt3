@@ -44,6 +44,7 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
                                                         &parents_population_size,
                                                         &matrix);
 
+        // Wyznaczenie dzieci jako populacji tworzonej z populacji rodziców
         for i in 0..children_pairs_size {
             let children_pair = generate_children_pair(&parents_population,
                                                        mutation_probability);
@@ -54,6 +55,11 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
 
         println!("Populacja dzieci ma rozmiar: {}", &children_population.len());
 
+        // Wyznaczenie nowej populacji, wybierając najlepsze osobniki z populacji dzieci i rodziców
+        population = regenerate_population(&matrix, &population, population_size as usize, &children_population);
+        // Wyczyszczenie populacji dzieci
+        children_population = Vec::new();
+        println!("Finałowa populacja w danej iteracji ma rozmiar: {}", &population.len());
     }
 }
 
@@ -132,12 +138,12 @@ fn regenerate_population(matrix: &Vec<Vec<i32>>,
         // Jeżeli obie populacje zawierają jeszcze elementy
         // Wybieramy ten, o korzystniejszej wartości funkcji przystosowania
         // Można sprawdzać po indeksach tablicy, bo wcześniej je sortowaliśmy
-        if permutation_evaluation_value(matrix, &current_population_children[current_population_children.len()])
-            < permutation_evaluation_value(matrix, &current_population[current_population.len()]) {
-            new_population.push(current_population[current_population.len()].clone());
+        if permutation_evaluation_value(matrix, &current_population_children[current_population_children.len() - 1])
+            < permutation_evaluation_value(matrix, &current_population[current_population.len() - 1]) {
+            new_population.push(current_population[current_population.len() - 1].clone());
             current_population.pop();
         } else {
-            new_population.push(current_population_children[current_population_children.len()].clone());
+            new_population.push(current_population_children[current_population_children.len() - 1].clone());
             current_population_children.pop();
         }
     }
