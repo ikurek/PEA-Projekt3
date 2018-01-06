@@ -24,16 +24,22 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
     // Podbnie zbiór rodziców jest tablicą dwuwymiarową osobników wybranych z populacji
     // Zakłądamy, że jest on połową całej populacji
     let mut parents_population_size: i32 = population_size / 2;
-    let mut parents_population: Vec<Vec<i32>> = find_parents_in_population(&population,
-                                                                           &population_size,
-                                                                           &parents_population_size,
-                                                                           &matrix);
+    let mut parents_population: Vec<Vec<i32>> = Vec::new();
 
-    for i in 0..parents_population_size {
-        println!("{:?}", parents_population[i as usize]);
+    // Pętla wykonująca całość algorytmu
+    // Napisana wg kroków podanych na wikipedii XD
+    for iteration in 0..iterations {
+        // Określenie populacji, która będzie rodzicami dla kolejnego pokolenia
+        parents_population = find_parents_in_population(&population,
+                                                        &population_size,
+                                                        &parents_population_size,
+                                                        &matrix);
+
+        for i in 0..children_pairs_size {
+            generate_children_pair(&parents_population);
+        }
+
     }
-
-
 }
 
 fn create_starting_population(number_of_cities: &i32,
@@ -99,7 +105,7 @@ fn find_parents_in_population(population: &Vec<Vec<i32>>,
             // Aktualnie sprawdzany element populacji nadaje się na rodzica
             // W przeciwnym wypadku należy zwiększyć wartość ostatniej funkcji
             // O wartość funkcji ewaluacji ostatniego osobnika
-            if (previous_value <= random_target_value) && (current_value <= random_target_value) {
+            if (previous_value <= random_target_value) && (random_target_value <= current_value) {
                 let permutation_to_add_as_parent: Vec<i32> = population[i as usize].clone();
                 selected_parents.push(permutation_to_add_as_parent);
                 break;
@@ -110,7 +116,7 @@ fn find_parents_in_population(population: &Vec<Vec<i32>>,
     }
 
     println!("Wybranych rodziców: {}", &selected_parents.len());
-
+    
     // Zwracana wartość jest tablicą zawierającą osobniki spełniające
     // Kryteria do bycia rodzicem
     return selected_parents;
@@ -148,6 +154,37 @@ fn permutation_evaluation_value(matrix: &Vec<Vec<i32>>,
     // Zwracana wartość jest różnicą pomiędzy maksimum a otrzymanym kosztem
     // Im większa wartość, tym lepszy wynik funkcji przystosowania
     return max_path_value - path_value;
+}
+
+// Funkcja wybiera dwoje osobników z populacji rodziców
+// Następnie generuje z nich parę osobników kolejnego pokolenia
+fn generate_children_pair(parents_population: &Vec<Vec<i32>>) {
+    // Tablica przechowująca dwie permutacje, odpowiadające
+    // Parze dzieci (osobników kolejnej populacji)
+    let mut children_pair: Vec<Vec<i32>> = Vec::new();
+    // Losowy wybór osobników z populacji pierwotnej
+    // Będą oni rodzicami pary osobników nowej populacji
+    let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
+}
+
+fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut parents_pair: Vec<Vec<i32>> = Vec::new();
+    let mut father_index: usize = 0;
+    let mut mother_index: usize = 0;
+    // Pętla zapobiega wylosowaniu dwa razy tego samego osobnika
+    // Ponieważ w takim wypadku algorytm nie ma sensu
+    while father_index == mother_index {
+        father_index = rand::thread_rng().gen_range(0, parents_population.len()) as usize;
+        mother_index = rand::thread_rng().gen_range(0, parents_population.len()) as usize;
+    }
+    // Po określeniu indeksów osobników, sa one dodawane do tablicy
+    parents_pair.push(parents_population[father_index].clone());
+    parents_pair.push(parents_population[mother_index].clone());
+
+    println!("Wylosowany Ojciec: {:?}", &parents_pair[0]);
+    println!("Wylosowana Matka: {:?}", &parents_pair[1]);
+
+    return parents_pair;
 }
 
 // Metoda zamienia dwa wybrane elementy w populacji
