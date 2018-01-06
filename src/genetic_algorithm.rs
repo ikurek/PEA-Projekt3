@@ -172,7 +172,6 @@ fn generate_children_pair(parents_population: &Vec<Vec<i32>>) {
     // Będą oni rodzicami pary osobników nowej populacji
     let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
 
-    //TODO: Koniec na chwilę
 }
 
 // Funkcja generuje losową parę rodziców z populacji
@@ -199,14 +198,10 @@ fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
 
 // Metoda zamienia dwa wybrane elementy w populacji
 // Zwraca permutację, jako wektor z zamienionymi elementami
-fn swap_elements_in_permutation(permutation: Vec<i32>,
-                                first_element_index: i32,
-                                second_element_index: i32) -> Vec<i32> {
+fn swap_elements_in_permutation(permutation: &Vec<i32>,
+                                first_element_index: usize,
+                                second_element_index: usize) -> Vec<i32> {
 
-    // Cast jest potrzebny bo nie można enumerować po i32
-    // Kocham ten język
-    let first_element_index: usize = first_element_index as usize;
-    let second_element_index: usize = second_element_index as usize;
     // Nowa populacja, będąca klonem starej
     let mut new_population: Vec<i32> = permutation.clone();
     // Swap elementów w nowej populacji
@@ -215,6 +210,38 @@ fn swap_elements_in_permutation(permutation: Vec<i32>,
     new_population[second_element_index] = saved_element;
     // Populacja po zamianie zwracana jako wynik
     return new_population;
+}
+
+// Metoda wykonuje mutację danego osobnika
+// Zamieniając elementu, jeżeli spełniony zostanie
+// Warunek określony przez prawdopodobieństwo
+fn attempt_child_mutation(permutation: Vec<i32>,
+                          mutation_probability: f32) -> Vec<i32> {
+
+    // Losowa zmienna z zakresu 0..1
+    let random_float: f32 = rand::thread_rng().next_f32();
+
+    // Sprawdzenie czy wylosowana liczba mieści się w zakresie podobieństwa
+    // Określonym przez użytkownika
+    if random_float <= mutation_probability {
+        // Zmienne przechowujące indeksy elementów do zamiany
+        let mut first_element_index: usize = 0;
+        let mut second_element_index: usize = 0;
+        // Losowanie elementów do momentu otrzymania dwóch róznych
+        // Zapobiega niepoprawnej mutacji
+        while first_element_index == second_element_index {
+            first_element_index = rand::thread_rng().gen_range(0, permutation.len());
+            second_element_index = rand::thread_rng().gen_range(0, permutation.len());
+        }
+
+        // Zwracana jest permutacja po zamianie elementów
+        // Na określonych wcześniej indeksach
+        return swap_elements_in_permutation(&permutation, first_element_index, second_element_index);
+    } else {
+        // Jeżeli warunek prawdopodobieństwa nie został spełniony
+        // Zwracana jest oryginalnie sprawdzana permutacja
+        return permutation;
+    }
 }
 
 // Funkcja generująca losową wartość celu
