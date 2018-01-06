@@ -2,3 +2,4 @@
 **/*.rs.bk
 /.idea/
 /Genetic.iml
+/genetic.iml

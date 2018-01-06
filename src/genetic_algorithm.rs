@@ -13,15 +13,19 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
 
     // Początkowe rozwiązanie ma maksymalną wartość
     let mut best_solution: i32 = <i32>::max_value();
+
     // Liczba miast
     let mut number_of_cities: i32 = matrix.len() as i32;
+
     // Tablica zawierająca uszeregowaną listę wszystkich wierzchołków w postaci tablicy
     let mut nodes: Vec<i32> = (0..number_of_cities).collect();
+
     // Populacja jest dwuwymiarową tablicą permutacji
     // Populacja startowa jest generowana losowo
     let mut population: Vec<Vec<i32>> = create_starting_population(&number_of_cities,
                                                                    &population_size,
                                                                    &nodes);
+
     // Podbnie zbiór rodziców jest tablicą dwuwymiarową osobników wybranych z populacji
     // Zakładamy, że jest on połową całej populacji
     let mut parents_population_size: i32 = population_size / 2;
@@ -80,7 +84,67 @@ fn create_starting_population(number_of_cities: &i32,
     return population;
 }
 
-fn regenerate_population() {}
+// Metoda generuje nową populację
+// Używana jest po wygenerowaniu kolejnego pokolenia
+// FIXME: Jest spore ryzyko, że dobór populacji nie działa poprawnie
+// FIXME: Jestem pewny że da się to zrobić lepiej
+fn regenerate_population(matrix: &Vec<Vec<i32>>,
+                         population: &Vec<Vec<i32>>,
+                         population_size: usize,
+                         population_children: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+
+    // Zmienna będzie przechowywała elementy nowej populacji
+    let mut new_population: Vec<Vec<i32>> = Vec::new();
+
+    // Zmienne przechowujące aktualne stany populacji wejściowej i jej dzieci
+    let mut current_population: Vec<Vec<i32>> = population.clone();
+    let mut current_population_children: Vec<Vec<i32>> = population_children.clone();
+
+    // Populacje wejściowe należy posortować wg wartości funkcji przystosowania
+    current_population.sort_by(|x, y|
+        permutation_evaluation_value(matrix, x)
+            .cmp(&permutation_evaluation_value(matrix, y)));
+
+    current_population_children.sort_by(|x, y|
+        permutation_evaluation_value(matrix, x)
+            .cmp(&permutation_evaluation_value(matrix, y)));
+
+
+    // Iteracja po całym docelowym rozmiarze populacji
+    for i in 0..population_size {
+
+        // Jeżeli pusty jest zbiór dzieci, ale zbiór rodziców ma jeszcze elementy
+        // Dodajemy do nowej populacji alement zbioru rodziców
+        if current_population_children.is_empty() && !current_population.is_empty() {
+            new_population.push(current_population[current_population.len()].clone());
+            current_population.pop();
+            continue;
+        }
+
+        // Jeżeli pusty jest zbiór rodziców, ale zbiór dzieci ma jescze elementy
+        // Dodajemy do nowej populacji alement zbioru dzieci
+        if !current_population_children.is_empty() && current_population.is_empty() {
+            new_population.push(current_population_children[current_population_children.len()].clone());
+            current_population_children.pop();
+            continue;
+        }
+
+        // Jeżeli obie populacje zawierają jeszcze elementy
+        // Wybieramy ten, o korzystniejszej wartości funkcji przystosowania
+        // Można sprawdzać po indeksach tablicy, bo wcześniej je sortowaliśmy
+        if permutation_evaluation_value(matrix, &current_population_children[current_population_children.len()])
+            < permutation_evaluation_value(matrix, &current_population[current_population.len()]) {
+            new_population.push(current_population[current_population.len()].clone());
+            current_population.pop();
+        } else {
+            new_population.push(current_population_children[current_population_children.len()].clone());
+            current_population_children.pop();
+        }
+    }
+
+    // Zwracamy nową populację wygenerowaną z dzieci i rodziców
+    return new_population
+}
 
 // Funkcja wybierająca rodziców spośród populacji
 // Przy użyciu kryterium celu i funkcji ewaluacji wartości osobników
