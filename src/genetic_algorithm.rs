@@ -23,9 +23,13 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
                                                                    &population_size,
                                                                    &nodes);
     // Podbnie zbiór rodziców jest tablicą dwuwymiarową osobników wybranych z populacji
-    // Zakłądamy, że jest on połową całej populacji
+    // Zakładamy, że jest on połową całej populacji
     let mut parents_population_size: i32 = population_size / 2;
     let mut parents_population: Vec<Vec<i32>> = Vec::new();
+
+    // Kolejny zbiór będzie przechowywał dzieci otrzymane w wyniku mutacji
+    // Oraz krzyżowania osobników populacji
+    let mut children_population: Vec<Vec<i32>> = Vec::new();
 
     // Pętla wykonująca całość algorytmu
     // Napisana wg kroków podanych na wikipedii XD
@@ -37,8 +41,14 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
                                                         &matrix);
 
         for i in 0..children_pairs_size {
-            generate_children_pair(&parents_population);
+            let children_pair = generate_children_pair(&parents_population,
+                                                       mutation_probability);
+            children_population.push(children_pair[0].clone());
+            children_population.push(children_pair[1].clone());
+
         }
+
+        println!("Populacja dzieci ma rozmiar: {}", &children_population.len());
 
     }
 }
@@ -69,6 +79,8 @@ fn create_starting_population(number_of_cities: &i32,
     // Zwrot gotowej populacji startowej
     return population;
 }
+
+fn regenerate_population() {}
 
 // Funkcja wybierająca rodziców spośród populacji
 // Przy użyciu kryterium celu i funkcji ewaluacji wartości osobników
@@ -164,14 +176,77 @@ fn permutation_evaluation_value(matrix: &Vec<Vec<i32>>,
 
 // Funkcja wybiera dwoje osobników z populacji rodziców
 // Następnie generuje z nich parę osobników kolejnego pokolenia
-fn generate_children_pair(parents_population: &Vec<Vec<i32>>) {
+fn generate_children_pair(parents_population: &Vec<Vec<i32>>,
+                          mutation_probability: f32) -> Vec<Vec<i32>> {
     // Tablica przechowująca dwie permutacje, odpowiadające
     // Parze dzieci (osobników kolejnej populacji)
     let mut children_pair: Vec<Vec<i32>> = Vec::new();
     // Losowy wybór osobników z populacji pierwotnej
     // Będą oni rodzicami pary osobników nowej populacji
     let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
+    println!("Ojciec: {:?}", &parents_pair[0]);
+    println!("Matka: {:?}", &parents_pair[1]);
+    // Początkowo dzieci są klonami rodziców
+    children_pair.push(parents_pair[0].clone());
+    children_pair.push(parents_pair[1].clone());
+    // Następnie następuje krzyżowanie osobników
+    children_pair = cross_children_pair_pmx(&children_pair);
+    // I próba mutacji otrzymanych dzieci
+    children_pair[0] = attempt_child_mutation(children_pair[0].clone(), mutation_probability);
+    children_pair[1] = attempt_child_mutation(children_pair[1].clone(), mutation_probability);
+    println!("  Syn: {:?}", &children_pair[0]);
+    println!("  Córka: {:?}", &children_pair[1]);
 
+    return children_pair;
+}
+
+// Zwraca parę dzieci po krzyżowaniu
+// Metodą Partially Matched Cross (PMX)
+fn cross_children_pair_pmx(children_pair: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+
+    // Nowa para dzieci
+    let mut new_children_pair: Vec<Vec<i32>> = children_pair.clone();
+    // Obliczenie ilości elementów w permutacji
+    let child_size: usize = children_pair[0].len() as usize;
+    // Wyznaczenie dwóch punktów krzyżowania
+    let mut first_cross_point: usize = 0;
+    let mut second_cross_point: usize = 0;
+    // Pętla zapobiegająca wylosowaniu dwóch takich samych punktów krzyżowania
+    while first_cross_point == second_cross_point {
+        first_cross_point = rand::thread_rng().gen_range(0, child_size);
+        second_cross_point = rand::thread_rng().gen_range(0, child_size);
+    }
+    // Sortowanie punktów krzyżowania
+    // Jeżeli pierwszy nastepuje po drugim
+    // Należy zamienić je miejscami
+    if first_cross_point > second_cross_point {
+        let temp_cross_point: usize = second_cross_point.clone();
+        second_cross_point = first_cross_point.clone();
+        first_cross_point = temp_cross_point;
+    }
+
+    // Pierwsza pętla krzyżująca metodą PMX
+    // Zamienia elementy dzieci w zakresie punktów krzyżowania
+    for i in first_cross_point..second_cross_point {
+        let mut temp_child_element = new_children_pair[0][i].clone();
+        new_children_pair[0][i] = new_children_pair[1][i];
+        new_children_pair[1][i] = temp_child_element;
+    }
+
+    // Druga pętla krzyżująca metodą PMX
+    // Zamienia pozostałe elementy, aby uniknąć niespójnych permutacji
+    for i in first_cross_point..second_cross_point {
+        for j in 0..first_cross_point {
+            if new_children_pair[0][i] == new_children_pair[0][j] {
+                new_children_pair[0][j] = new_children_pair[1][i].clone();
+            }
+            if new_children_pair[1][i] == new_children_pair[1][j] {
+                new_children_pair[1][j] = new_children_pair[0][i].clone();
+            }
+        }
+    }
+
+    return new_children_pair;
 }
 
 // Funkcja generuje losową parę rodziców z populacji
@@ -189,9 +264,6 @@ fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     // Po określeniu indeksów osobników, sa one dodawane do tablicy
     parents_pair.push(parents_population[father_index].clone());
     parents_pair.push(parents_population[mother_index].clone());
-
-    println!("Wylosowany Ojciec: {:?}", &parents_pair[0]);
-    println!("Wylosowana Matka: {:?}", &parents_pair[1]);
 
     return parents_pair;
 }
@@ -224,6 +296,8 @@ fn attempt_child_mutation(permutation: Vec<i32>,
     // Sprawdzenie czy wylosowana liczba mieści się w zakresie podobieństwa
     // Określonym przez użytkownika
     if random_float <= mutation_probability {
+        println!("Nastąpiła mutacja dziecka {:?}", &permutation);
+
         // Zmienne przechowujące indeksy elementów do zamiany
         let mut first_element_index: usize = 0;
         let mut second_element_index: usize = 0;
