@@ -103,7 +103,7 @@ fn main() {
         io::stdin().read_line(&mut mutation_probability).expect(
             "Błąd wejścia/wyjścia",
         );
-        let mutation_probability: i32 = mutation_probability.trim().parse().expect("Błędna wartość");
+        let mutation_probability: f32 = mutation_probability.trim().parse().expect("Błędna wartość");
 
         // Maksymalny czas
         println!("Maksymalny czas:");
@@ -111,8 +111,14 @@ fn main() {
         io::stdin().read_line(&mut max_time).expect(
             "Błąd wejścia/wyjścia",
         );
-        let max_time: i64 = max_time.trim().parse().expect("Błędna wartość");
+        let max_time: i32 = max_time.trim().parse().expect("Błędna wartość");
 
         // Rozwiązanie z parametrami
+        genetic_algorithm::solve(matrix,
+                                 iterations,
+                                 population_size,
+                                 children_pairs_size,
+                                 mutation_probability,
+                                 max_time)
     }
 }
