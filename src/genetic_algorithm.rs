@@ -3,6 +3,7 @@ extern crate rand;
 
 use self::rand::Rng as random_number_generator;
 
+// Podstawowa metoda zawierająca całość algorytmu
 pub fn solve(matrix: &mut Vec<Vec<i32>>,
              iterations: i32,
              population_size: i32,
@@ -42,6 +43,9 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
     }
 }
 
+// Funckja generująca w losowy sposób populację początkową
+// Nie korzystam z algorytmu zachłannego
+// Lubię jak jest losowo
 fn create_starting_population(number_of_cities: &i32,
                               population_size: &i32,
                               nodes: &Vec<i32>) -> Vec<Vec<i32>> {
@@ -66,6 +70,8 @@ fn create_starting_population(number_of_cities: &i32,
     return population;
 }
 
+// Funkcja wybierająca rodziców spośród populacji
+// Przy użyciu kryterium celu i funkcji ewaluacji wartości osobników
 fn find_parents_in_population(population: &Vec<Vec<i32>>,
                               population_size: &i32,
                               parents_population_size: &i32,
@@ -116,7 +122,7 @@ fn find_parents_in_population(population: &Vec<Vec<i32>>,
     }
 
     println!("Wybranych rodziców: {}", &selected_parents.len());
-    
+
     // Zwracana wartość jest tablicą zawierającą osobniki spełniające
     // Kryteria do bycia rodzicem
     return selected_parents;
@@ -165,8 +171,12 @@ fn generate_children_pair(parents_population: &Vec<Vec<i32>>) {
     // Losowy wybór osobników z populacji pierwotnej
     // Będą oni rodzicami pary osobników nowej populacji
     let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
+
+    //TODO: Koniec na chwilę
 }
 
+// Funkcja generuje losową parę rodziców z populacji
+// Zapobiega wylosowaniu dwukrotnie tego samego rodzica
 fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     let mut parents_pair: Vec<Vec<i32>> = Vec::new();
     let mut father_index: usize = 0;
@@ -207,6 +217,8 @@ fn swap_elements_in_permutation(permutation: Vec<i32>,
     return new_population;
 }
 
+// Funkcja generująca losową wartość celu
+// Wykorzystywana przy wyborze rodziców do kolejnej populacji
 fn generate_randomized_target_value(permutation_evaluation_sum: &i64) -> i64 {
 
     // Losowy float w zakresie 0..1
