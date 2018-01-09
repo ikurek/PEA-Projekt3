@@ -8,13 +8,13 @@ use std::fs::File;
 pub fn read_any_file(file_name: String) -> Vec<Vec<i32>> {
     if file_name.ends_with("txt") {
         println!("Wybrano macierz grafu");
-        return read_txt_file(file_name)
+        return read_txt_file(file_name);
     } else if file_name.ends_with("atsp") {
         println!("Wybrano plik ATSP");
-        return read_atsp_file(file_name)
+        return read_atsp_file(file_name);
     } else {
         println!("Wybrano plik TSP");
-        return read_tsp_file(file_name)
+        return read_tsp_file(file_name);
     }
 }
 
@@ -68,7 +68,8 @@ pub fn read_txt_file(file_name: String) -> Vec<Vec<i32>> {
 fn parse_file_line(line: String) -> Vec<i32> {
     let cleared_line = line.replace("/  +/", " ");
 
-    return cleared_line.split_whitespace()
+    return cleared_line
+        .split_whitespace()
         .map(|s| s.parse().unwrap())
         .collect();
 }
@@ -100,9 +101,7 @@ fn read_tsp_file(file_name: String) -> Vec<Vec<i32>> {
             }
         }
 
-        Err(error) => {
-            println!("Błąd: {}", &error)
-        }
+        Err(error) => println!("Błąd: {}", &error),
     }
     return matrix;
 }
@@ -134,10 +133,7 @@ fn convert_coordinates_to_weigth_matrix(nodes_2d: Vec<(usize, f32, f32)>) -> Vec
     return matrix;
 }
 
-fn distance_between_coordinates(x_start: f32,
-                                y_start: f32,
-                                x_end: f32,
-                                y_end: f32) -> i32 {
+fn distance_between_coordinates(x_start: f32, y_start: f32, x_end: f32, y_end: f32) -> i32 {
     let distance_power_sum = (x_start - x_end).powi(2) + (y_start - y_end).powi(2);
 
     return distance_power_sum.sqrt() as i32;
@@ -182,10 +178,7 @@ fn read_atsp_file(file_name: String) -> Vec<Vec<i32>> {
                     let number_of_cities: Vec<&str> = line.split_whitespace().collect();
                     number_of_nodes = number_of_cities[1].parse().unwrap();
                     println!("Liczba miast: {}", number_of_nodes);
-                } else
-
-                // Jeżeli linia jest linią macierzy i nie jest EOF
-                if current_line > 6 && !line.contains("EOF") {
+                } else if current_line > 6 && !line.contains("EOF") {
 
                     // Parsuj linię do wektora
                     let parsed_line = parse_file_line(line);
@@ -211,6 +204,3 @@ fn read_atsp_file(file_name: String) -> Vec<Vec<i32>> {
 
     return matrix;
 }
-
-
-

@@ -4,12 +4,14 @@ extern crate rand;
 use self::rand::Rng as random_number_generator;
 
 // Podstawowa metoda zawierająca całość algorytmu
-pub fn solve(matrix: &mut Vec<Vec<i32>>,
-             iterations: i32,
-             population_size: i32,
-             children_pairs_size: i32,
-             mutation_probability: f32,
-             max_time_in_seconds: i32) {
+pub fn solve(
+    matrix: &mut Vec<Vec<i32>>,
+    iterations: i32,
+    population_size: i32,
+    children_pairs_size: i32,
+    mutation_probability: f32,
+    max_time_in_seconds: i32,
+) {
 
     // Początkowe rozwiązanie ma maksymalną wartość
     let mut best_solution: i32 = <i32>::max_value();
@@ -22,9 +24,8 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
 
     // Populacja jest dwuwymiarową tablicą permutacji
     // Populacja startowa jest generowana losowo
-    let mut population: Vec<Vec<i32>> = create_starting_population(&number_of_cities,
-                                                                   &population_size,
-                                                                   &nodes);
+    let mut population: Vec<Vec<i32>> =
+        create_starting_population(&number_of_cities, &population_size, &nodes);
 
     // Podbnie zbiór rodziców jest tablicą dwuwymiarową osobników wybranych z populacji
     // Zakładamy, że jest on połową całej populacji
@@ -39,37 +40,53 @@ pub fn solve(matrix: &mut Vec<Vec<i32>>,
     // Napisana wg kroków podanych na wikipedii XD
     for iteration in 0..iterations {
         // Określenie populacji, która będzie rodzicami dla kolejnego pokolenia
-        parents_population = find_parents_in_population(&population,
-                                                        &population_size,
-                                                        &parents_population_size,
-                                                        &matrix);
+        parents_population = find_parents_in_population(
+            &population,
+            &population_size,
+            &parents_population_size,
+            &matrix,
+        );
 
         // Wyznaczenie dzieci jako populacji tworzonej z populacji rodziców
         for i in 0..children_pairs_size {
-            let children_pair = generate_children_pair(&parents_population,
-                                                       mutation_probability);
+            let children_pair = generate_children_pair(&parents_population, mutation_probability);
             children_population.push(children_pair[0].clone());
             children_population.push(children_pair[1].clone());
-
         }
 
-        println!("Populacja dzieci ma rozmiar: {}", &children_population.len());
+        println!(
+            "Populacja dzieci ma rozmiar: {}",
+            &children_population.len()
+        );
 
         // Wyznaczenie nowej populacji, wybierając najlepsze osobniki z populacji dzieci i rodziców
-        population = regenerate_population(&matrix, &population, population_size as usize, &children_population);
+        population = regenerate_population(
+            &matrix,
+            &population,
+            population_size as usize,
+            &children_population,
+        );
         // Wyczyszczenie populacji dzieci
         children_population = Vec::new();
-        println!("Finałowa populacja w danej iteracji ma rozmiar: {}", &population.len());
+        println!(
+            "Finałowa populacja w danej iteracji ma rozmiar: {}",
+            &population.len()
+        );
     }
 }
 
 // Funckja generująca w losowy sposób populację początkową
 // Nie korzystam z algorytmu zachłannego
 // Lubię jak jest losowo
-fn create_starting_population(number_of_cities: &i32,
-                              population_size: &i32,
-                              nodes: &Vec<i32>) -> Vec<Vec<i32>> {
-    println!("Generowanie populacji początkowej, rozmiar: {}", &population_size);
+fn create_starting_population(
+    number_of_cities: &i32,
+    population_size: &i32,
+    nodes: &Vec<i32>,
+) -> Vec<Vec<i32>> {
+    println!(
+        "Generowanie populacji początkowej, rozmiar: {}",
+        &population_size
+    );
 
     // Tablica dwuwymiarowa przechowująca gotową populację
     let mut population: Vec<Vec<i32>> = Vec::new();
@@ -92,12 +109,12 @@ fn create_starting_population(number_of_cities: &i32,
 
 // Metoda generuje nową populację
 // Używana jest po wygenerowaniu kolejnego pokolenia
-// FIXME: Jest spore ryzyko, że dobór populacji nie działa poprawnie
-// FIXME: Jestem pewny że da się to zrobić lepiej
-fn regenerate_population(matrix: &Vec<Vec<i32>>,
-                         population: &Vec<Vec<i32>>,
-                         population_size: usize,
-                         population_children: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+fn regenerate_population(
+    matrix: &Vec<Vec<i32>>,
+    population: &Vec<Vec<i32>>,
+    population_size: usize,
+    population_children: &Vec<Vec<i32>>,
+) -> Vec<Vec<i32>> {
 
     // Zmienna będzie przechowywała elementy nowej populacji
     let mut new_population: Vec<Vec<i32>> = Vec::new();
@@ -107,13 +124,13 @@ fn regenerate_population(matrix: &Vec<Vec<i32>>,
     let mut current_population_children: Vec<Vec<i32>> = population_children.clone();
 
     // Populacje wejściowe należy posortować wg wartości funkcji przystosowania
-    current_population.sort_by(|x, y|
-        permutation_evaluation_value(matrix, x)
-            .cmp(&permutation_evaluation_value(matrix, y)));
+    current_population.sort_by(|x, y| {
+        permutation_evaluation_value(matrix, x).cmp(&permutation_evaluation_value(matrix, y))
+    });
 
-    current_population_children.sort_by(|x, y|
-        permutation_evaluation_value(matrix, x)
-            .cmp(&permutation_evaluation_value(matrix, y)));
+    current_population_children.sort_by(|x, y| {
+        permutation_evaluation_value(matrix, x).cmp(&permutation_evaluation_value(matrix, y))
+    });
 
 
     // Iteracja po całym docelowym rozmiarze populacji
@@ -122,7 +139,7 @@ fn regenerate_population(matrix: &Vec<Vec<i32>>,
         // Jeżeli pusty jest zbiór dzieci, ale zbiór rodziców ma jeszcze elementy
         // Dodajemy do nowej populacji alement zbioru rodziców
         if current_population_children.is_empty() && !current_population.is_empty() {
-            new_population.push(current_population[current_population.len()].clone());
+            new_population.push(current_population[current_population.len() - 1].clone());
             current_population.pop();
             continue;
         }
@@ -130,7 +147,9 @@ fn regenerate_population(matrix: &Vec<Vec<i32>>,
         // Jeżeli pusty jest zbiór rodziców, ale zbiór dzieci ma jescze elementy
         // Dodajemy do nowej populacji alement zbioru dzieci
         if !current_population_children.is_empty() && current_population.is_empty() {
-            new_population.push(current_population_children[current_population_children.len()].clone());
+            new_population.push(
+                current_population_children[current_population_children.len() - 1].clone(),
+            );
             current_population_children.pop();
             continue;
         }
@@ -138,27 +157,42 @@ fn regenerate_population(matrix: &Vec<Vec<i32>>,
         // Jeżeli obie populacje zawierają jeszcze elementy
         // Wybieramy ten, o korzystniejszej wartości funkcji przystosowania
         // Można sprawdzać po indeksach tablicy, bo wcześniej je sortowaliśmy
-        if permutation_evaluation_value(matrix, &current_population_children[current_population_children.len() - 1])
-            < permutation_evaluation_value(matrix, &current_population[current_population.len() - 1]) {
+        if permutation_evaluation_value(
+            matrix,
+            &current_population_children[current_population_children.len() - 1],
+        ) <
+            permutation_evaluation_value(
+                matrix,
+                &current_population[current_population.len() - 1],
+            )
+            {
             new_population.push(current_population[current_population.len() - 1].clone());
             current_population.pop();
         } else {
-            new_population.push(current_population_children[current_population_children.len() - 1].clone());
+            new_population.push(
+                current_population_children[current_population_children.len() - 1]
+                    .clone(),
+            );
             current_population_children.pop();
         }
     }
 
     // Zwracamy nową populację wygenerowaną z dzieci i rodziców
-    return new_population
+    return new_population;
 }
 
 // Funkcja wybierająca rodziców spośród populacji
 // Przy użyciu kryterium celu i funkcji ewaluacji wartości osobników
-fn find_parents_in_population(population: &Vec<Vec<i32>>,
-                              population_size: &i32,
-                              parents_population_size: &i32,
-                              matrix: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    println!("Wyszukiwanie rodziców w populacji o rozmiarze {}", &population_size);
+fn find_parents_in_population(
+    population: &Vec<Vec<i32>>,
+    population_size: &i32,
+    parents_population_size: &i32,
+    matrix: &Vec<Vec<i32>>,
+) -> Vec<Vec<i32>> {
+    println!(
+        "Wyszukiwanie rodziców w populacji o rozmiarze {}",
+        &population_size
+    );
     // Populacja która będzie przechowywać wybranych rodziców
     let mut selected_parents: Vec<Vec<i32>> = Vec::new();
     // Suma całkowita wszystkich wartości funkcji przystosowania populacji
@@ -169,8 +203,12 @@ fn find_parents_in_population(population: &Vec<Vec<i32>>,
     // Wyliczenie wartości funkcji przystosowania dla wszystkich osobników populacji
     // Zwiększenie sumy całkowitej funkcji przystosowania
     for i in 0..population_size.clone() {
-        permutation_evaluation_values.push(permutation_evaluation_value(&matrix, &population[i as usize]));
-        permutations_evaluation_sum = permutations_evaluation_sum + permutation_evaluation_values[i as usize] as i64;
+        permutation_evaluation_values.push(permutation_evaluation_value(
+            &matrix,
+            &population[i as usize],
+        ));
+        permutations_evaluation_sum = permutations_evaluation_sum +
+            permutation_evaluation_values[i as usize] as i64;
     }
     // Zmienna przechowująca losowy współczynnik określający funkcję celu
     let mut random_target_value: i64;
@@ -212,7 +250,8 @@ fn find_parents_in_population(population: &Vec<Vec<i32>>,
 
 // Funkcja obliczająca koszt ścieżki
 fn permutation_value(matrix: &Vec<Vec<i32>>,
-                     permutation: &Vec<i32>) -> i32 {
+                     permutation: &Vec<i32>
+) -> i32 {
 
     // Początkowy koszt ścieżki to 0
     let mut value: i32 = 0;
@@ -233,7 +272,8 @@ fn permutation_value(matrix: &Vec<Vec<i32>>,
 
 // Funkcja wyliczająca wartość funkcji przystosowania dla wybranego elementu populacji
 fn permutation_evaluation_value(matrix: &Vec<Vec<i32>>,
-                                permutation: &Vec<i32>) -> i32 {
+                                permutation: &Vec<i32>
+) -> i32 {
 
     // Koszt ścieżki zawartej w danej permutacji
     let mut path_value: i32 = permutation_value(&matrix, &permutation);
@@ -246,8 +286,10 @@ fn permutation_evaluation_value(matrix: &Vec<Vec<i32>>,
 
 // Funkcja wybiera dwoje osobników z populacji rodziców
 // Następnie generuje z nich parę osobników kolejnego pokolenia
-fn generate_children_pair(parents_population: &Vec<Vec<i32>>,
-                          mutation_probability: f32) -> Vec<Vec<i32>> {
+fn generate_children_pair(
+    parents_population: &Vec<Vec<i32>>,
+    mutation_probability: f32,
+) -> Vec<Vec<i32>> {
     // Tablica przechowująca dwie permutacje, odpowiadające
     // Parze dzieci (osobników kolejnej populacji)
     let mut children_pair: Vec<Vec<i32>> = Vec::new();
@@ -256,11 +298,9 @@ fn generate_children_pair(parents_population: &Vec<Vec<i32>>,
     let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
     println!("Ojciec: {:?}", &parents_pair[0]);
     println!("Matka: {:?}", &parents_pair[1]);
-    // Początkowo dzieci są klonami rodziców
-    children_pair.push(parents_pair[0].clone());
-    children_pair.push(parents_pair[1].clone());
     // Następnie następuje krzyżowanie osobników
-    children_pair = cross_children_pair_pmx(&children_pair);
+    children_pair.push(cross_single_child_pmx(&parents_pair));
+    children_pair.push(cross_single_child_pmx(&parents_pair));
     // I próba mutacji otrzymanych dzieci
     children_pair[0] = attempt_child_mutation(children_pair[0].clone(), mutation_probability);
     children_pair[1] = attempt_child_mutation(children_pair[1].clone(), mutation_probability);
@@ -272,12 +312,13 @@ fn generate_children_pair(parents_population: &Vec<Vec<i32>>,
 
 // Zwraca parę dzieci po krzyżowaniu
 // Metodą Partially Matched Cross (PMX)
-fn cross_children_pair_pmx(children_pair: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-
+fn cross_single_child_pmx(parents_pair: &Vec<Vec<i32>>
+) -> Vec<i32> {
+    let child_size: usize = parents_pair[0].len() as usize;
     // Nowa para dzieci
-    let mut new_children_pair: Vec<Vec<i32>> = children_pair.clone();
+    let mut child: Vec<i32> = vec![0; child_size];
+    let mut swapped: Vec<i32> = vec![0; child_size];
     // Obliczenie ilości elementów w permutacji
-    let child_size: usize = children_pair[0].len() as usize;
     // Wyznaczenie dwóch punktów krzyżowania
     let mut first_cross_point: usize = 0;
     let mut second_cross_point: usize = 0;
@@ -286,6 +327,7 @@ fn cross_children_pair_pmx(children_pair: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
         first_cross_point = rand::thread_rng().gen_range(0, child_size);
         second_cross_point = rand::thread_rng().gen_range(0, child_size);
     }
+
     // Sortowanie punktów krzyżowania
     // Jeżeli pierwszy nastepuje po drugim
     // Należy zamienić je miejscami
@@ -297,31 +339,32 @@ fn cross_children_pair_pmx(children_pair: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
 
     // Pierwsza pętla krzyżująca metodą PMX
     // Zamienia elementy dzieci w zakresie punktów krzyżowania
-    for i in first_cross_point..second_cross_point {
-        let mut temp_child_element = new_children_pair[0][i].clone();
-        new_children_pair[0][i] = new_children_pair[1][i];
-        new_children_pair[1][i] = temp_child_element;
+    for i in (first_cross_point)..(second_cross_point) {
+        child[i] = parents_pair[0][i].clone();
+        swapped[parents_pair[0][i] as usize] = 1;
     }
 
     // Druga pętla krzyżująca metodą PMX
     // Zamienia pozostałe elementy, aby uniknąć niespójnych permutacji
-    for i in first_cross_point..second_cross_point {
-        for j in 0..first_cross_point {
-            if new_children_pair[0][i] == new_children_pair[0][j] {
-                new_children_pair[0][j] = new_children_pair[1][i].clone();
+    let mut swap_index = 0;
+    for i in 0..child_size {
+        if swapped[parents_pair[1][i] as usize] != 1 {
+            if swap_index == first_cross_point {
+                swap_index = second_cross_point.clone();
             }
-            if new_children_pair[1][i] == new_children_pair[1][j] {
-                new_children_pair[1][j] = new_children_pair[0][i].clone();
-            }
+
+            child[swap_index] = parents_pair[1][i].clone();
+            swap_index = swap_index + 1;
         }
     }
 
-    return new_children_pair;
+    return child;
 }
 
 // Funkcja generuje losową parę rodziców z populacji
 // Zapobiega wylosowaniu dwukrotnie tego samego rodzica
-fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+fn generate_parents_pair(parents_population: &Vec<Vec<i32>>
+) -> Vec<Vec<i32>> {
     let mut parents_pair: Vec<Vec<i32>> = Vec::new();
     let mut father_index: usize = 0;
     let mut mother_index: usize = 0;
@@ -340,9 +383,11 @@ fn generate_parents_pair(parents_population: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
 
 // Metoda zamienia dwa wybrane elementy w populacji
 // Zwraca permutację, jako wektor z zamienionymi elementami
-fn swap_elements_in_permutation(permutation: &Vec<i32>,
-                                first_element_index: usize,
-                                second_element_index: usize) -> Vec<i32> {
+fn swap_elements_in_permutation(
+    permutation: &Vec<i32>,
+    first_element_index: usize,
+    second_element_index: usize,
+) -> Vec<i32> {
 
     // Nowa populacja, będąca klonem starej
     let mut new_population: Vec<i32> = permutation.clone();
@@ -358,7 +403,8 @@ fn swap_elements_in_permutation(permutation: &Vec<i32>,
 // Zamieniając elementu, jeżeli spełniony zostanie
 // Warunek określony przez prawdopodobieństwo
 fn attempt_child_mutation(permutation: Vec<i32>,
-                          mutation_probability: f32) -> Vec<i32> {
+                          mutation_probability: f32
+) -> Vec<i32> {
 
     // Losowa zmienna z zakresu 0..1
     let random_float: f32 = rand::thread_rng().next_f32();
@@ -380,7 +426,11 @@ fn attempt_child_mutation(permutation: Vec<i32>,
 
         // Zwracana jest permutacja po zamianie elementów
         // Na określonych wcześniej indeksach
-        return swap_elements_in_permutation(&permutation, first_element_index, second_element_index);
+        return swap_elements_in_permutation(
+            &permutation,
+            first_element_index,
+            second_element_index,
+        );
     } else {
         // Jeżeli warunek prawdopodobieństwa nie został spełniony
         // Zwracana jest oryginalnie sprawdzana permutacja
@@ -390,7 +440,8 @@ fn attempt_child_mutation(permutation: Vec<i32>,
 
 // Funkcja generująca losową wartość celu
 // Wykorzystywana przy wyborze rodziców do kolejnej populacji
-fn generate_randomized_target_value(permutation_evaluation_sum: &i64) -> i64 {
+fn generate_randomized_target_value(permutation_evaluation_sum: &i64
+) -> i64 {
 
     // Losowy float w zakresie 0..1
     let random_float: f64 = rand::thread_rng().next_f64();

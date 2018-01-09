@@ -55,7 +55,8 @@ fn main() {
                     "Błąd wejścia/wyjścia",
                 );
 
-                let number_of_nodes: i32 = number_of_nodes.trim().parse().expect("Błędna wartość");
+                let number_of_nodes: i32 =
+                    number_of_nodes.trim().parse().expect("Błędna wartość");
 
                 matrix = graph_generator::generate_random_graph(number_of_nodes);
                 print_utils::print_matrix(&matrix);
@@ -69,7 +70,7 @@ fn main() {
             }
             _ => println!("Niepoprawna wartość!"),
         }
-    };
+    }
 
     fn solve_genetic(mut matrix: &mut Vec<Vec<i32>>) {
 
@@ -95,7 +96,9 @@ fn main() {
         io::stdin().read_line(&mut children_pairs_size).expect(
             "Błąd wejścia/wyjścia",
         );
-        let children_pairs_size: i32 = children_pairs_size.trim().parse().expect("Błędna wartość");
+        let children_pairs_size: i32 = children_pairs_size.trim().parse().expect(
+            "Błędna wartość",
+        );
 
         // Prawdopodobieństwo mutacji
         println!("Prawdopodobieństwo mutacji:");
@@ -103,7 +106,9 @@ fn main() {
         io::stdin().read_line(&mut mutation_probability).expect(
             "Błąd wejścia/wyjścia",
         );
-        let mutation_probability: f32 = mutation_probability.trim().parse().expect("Błędna wartość");
+        let mutation_probability: f32 = mutation_probability.trim().parse().expect(
+            "Błędna wartość",
+        );
 
         // Maksymalny czas
         println!("Maksymalny czas:");
@@ -114,11 +119,13 @@ fn main() {
         let max_time: i32 = max_time.trim().parse().expect("Błędna wartość");
 
         // Rozwiązanie z parametrami
-        genetic_algorithm::solve(matrix,
-                                 iterations,
-                                 population_size,
-                                 children_pairs_size,
-                                 mutation_probability,
-                                 max_time)
+        genetic_algorithm::solve(
+            matrix,
+            iterations,
+            population_size,
+            children_pairs_size,
+            mutation_probability,
+            max_time,
+        )
     }
 }
