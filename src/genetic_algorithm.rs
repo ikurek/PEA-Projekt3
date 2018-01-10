@@ -15,6 +15,8 @@ pub fn solve(
 
     // Początkowe rozwiązanie ma maksymalną wartość
     let mut best_solution: i32 = <i32>::max_value();
+    let mut best_element: Vec<i32> = Vec::new();
+    let mut current_best_solution: i32 = <i32>::max_value();
 
     // Liczba miast
     let mut number_of_cities: i32 = matrix.len() as i32;
@@ -54,11 +56,6 @@ pub fn solve(
             children_population.push(children_pair[1].clone());
         }
 
-        println!(
-            "Populacja dzieci ma rozmiar: {}",
-            &children_population.len()
-        );
-
         // Wyznaczenie nowej populacji, wybierając najlepsze osobniki z populacji dzieci i rodziców
         population = regenerate_population(
             &matrix,
@@ -68,11 +65,20 @@ pub fn solve(
         );
         // Wyczyszczenie populacji dzieci
         children_population = Vec::new();
-        println!(
-            "Finałowa populacja w danej iteracji ma rozmiar: {}",
-            &population.len()
-        );
+
+        // Obliczenie kosztu ścieżki najlepszego elementu w populacji
+        current_best_solution = get_best_population_element_value(&matrix, &population);
+
+        // Zapisanie wyniku, jeżeli jest lepszy niż aktualny
+        if current_best_solution < best_solution {
+            best_solution = current_best_solution.clone();
+            best_element = population[0].clone();
+        }
     }
+
+    println!("Wynik:");
+    println!("{}", best_solution);
+    println!("{:?}", best_element);
 }
 
 // Funckja generująca w losowy sposób populację początkową
@@ -98,8 +104,17 @@ fn create_starting_population(
     // Ale mam to w dupie, bo sam mam siostry bliźniaczki
     // Więc mój algorytm dopuszcza opcję dwóch takich samych elementów w populacji
     for i in 0..(population_size.clone()) {
+        // Stworzenie elementu populacji z kolejnymi elementami
         single_population_element = nodes.clone();
+        // Przelosowanie elementu
         rand::thread_rng().shuffle(&mut single_population_element);
+        // Przywrócenie 0 na pierwszą pozycję wektora
+        for j in 0..(single_population_element.len()) {
+            if single_population_element[j] == 0 {
+                single_population_element[j] = single_population_element[0].clone();
+                single_population_element[0] = 0;
+            }
+        }
         population.push(single_population_element);
     }
 
@@ -189,10 +204,7 @@ fn find_parents_in_population(
     parents_population_size: &i32,
     matrix: &Vec<Vec<i32>>,
 ) -> Vec<Vec<i32>> {
-    println!(
-        "Wyszukiwanie rodziców w populacji o rozmiarze {}",
-        &population_size
-    );
+    println!("Wyszukiwanie rodziców w populacji...");
     // Populacja która będzie przechowywać wybranych rodziców
     let mut selected_parents: Vec<Vec<i32>> = Vec::new();
     // Suma całkowita wszystkich wartości funkcji przystosowania populacji
@@ -241,8 +253,6 @@ fn find_parents_in_population(
         }
     }
 
-    println!("Wybranych rodziców: {}", &selected_parents.len());
-
     // Zwracana wartość jest tablicą zawierającą osobniki spełniające
     // Kryteria do bycia rodzicem
     return selected_parents;
@@ -258,7 +268,7 @@ fn permutation_value(matrix: &Vec<Vec<i32>>,
     // Pierwszy wierzchołek
     let mut previous_node: usize = 0;
     // Iteracja po wszystkich kolejnych wierzchołkach
-    for i in 0..(permutation.len() as i32) {
+    for i in 1..(permutation.len() as i32) {
         // Zwiększenie kosztu
         value = value + matrix[previous_node][(permutation[(i as usize)] as usize)];
         // Przypisanie aktualnego wierzchołka jako poprzedniego
@@ -296,8 +306,6 @@ fn generate_children_pair(
     // Losowy wybór osobników z populacji pierwotnej
     // Będą oni rodzicami pary osobników nowej populacji
     let mut parents_pair: Vec<Vec<i32>> = generate_parents_pair(&parents_population);
-    println!("Ojciec: {:?}", &parents_pair[0]);
-    println!("Matka: {:?}", &parents_pair[1]);
     // Następnie następuje krzyżowanie osobników
     children_pair.push(cross_single_child_pmx(&parents_pair));
     children_pair.push(cross_single_child_pmx(&parents_pair));
@@ -324,8 +332,8 @@ fn cross_single_child_pmx(parents_pair: &Vec<Vec<i32>>
     let mut second_cross_point: usize = 0;
     // Pętla zapobiegająca wylosowaniu dwóch takich samych punktów krzyżowania
     while first_cross_point == second_cross_point {
-        first_cross_point = rand::thread_rng().gen_range(0, child_size);
-        second_cross_point = rand::thread_rng().gen_range(0, child_size);
+        first_cross_point = rand::thread_rng().gen_range(1, child_size);
+        second_cross_point = rand::thread_rng().gen_range(1, child_size);
     }
 
     // Sortowanie punktów krzyżowania
@@ -420,8 +428,8 @@ fn attempt_child_mutation(permutation: Vec<i32>,
         // Losowanie elementów do momentu otrzymania dwóch róznych
         // Zapobiega niepoprawnej mutacji
         while first_element_index == second_element_index {
-            first_element_index = rand::thread_rng().gen_range(0, permutation.len());
-            second_element_index = rand::thread_rng().gen_range(0, permutation.len());
+            first_element_index = rand::thread_rng().gen_range(1, permutation.len());
+            second_element_index = rand::thread_rng().gen_range(1, permutation.len());
         }
 
         // Zwracana jest permutacja po zamianie elementów
@@ -451,4 +459,11 @@ fn generate_randomized_target_value(permutation_evaluation_sum: &i64
     let target: i64 = target_as_float as i64;
     // Zwrot wyliczonego kryterium celu
     return target;
+}
+
+// Metoda oblicza koszt ścieżki najlepszego elementu w populacji
+fn get_best_population_element_value(matrix: &Vec<Vec<i32>>,
+                                     population: &Vec<Vec<i32>>,
+) -> i32 {
+    return <i32>::max_value() - permutation_evaluation_value(&matrix, &population[0])
 }
